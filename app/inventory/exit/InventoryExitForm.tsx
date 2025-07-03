@@ -103,6 +103,7 @@ function SummaryStep({
 export default function InventoryExitForm() {
   const [currentStep, setCurrentStep] = useState(0)
   const errorRef = useRef<HTMLParagraphElement>(null)
+  const [unexpectedError, setUnexpectedError] = useState<string | null>(null)
   const methods = useForm<InventoryUsageInput>({
     resolver: zodResolver(inventoryUsageSchema),
     mode: 'onSubmit',
@@ -118,13 +119,16 @@ export default function InventoryExitForm() {
             toast.success(res.data.success)
             methods.reset()
             setCurrentStep(0)
+            setUnexpectedError(null)
         } else if (res.data?.failure) {
             toast.error(res.data.failure)
+            setUnexpectedError(res.data.failure)
         }
     },
     onError: (error) => {
         toast.error('Ocurrió un error inesperado.')
-        console.error(error);
+        setUnexpectedError('Ocurrió un error inesperado. Intenta de nuevo o contacta soporte.')
+        console.error('InventoryExitForm error:', error);
     }
   })
 
@@ -134,29 +138,46 @@ export default function InventoryExitForm() {
     if (steps[currentStep] === 'TREATMENT_TYPE') fieldsToValidate.push('tipoTratamiento')
     if (steps[currentStep] === 'DETAILS') fieldsToValidate.push('items')
     const isValid = await methods.trigger(fieldsToValidate)
+    if (!isValid) {
+      console.warn('Errores de validación:', methods.formState.errors)
+    }
     if (isValid) setCurrentStep((prev) => prev + 1)
   }
 
   const handleBack = () => setCurrentStep((prev) => prev - 1)
 
   const onSubmit = async (data: InventoryUsageInput) => {
-    // Validación extra: tipoTratamiento debe existir
     if (!data.tipoTratamiento) {
       toast.error('Debes seleccionar un tipo de tratamiento antes de registrar la salida.')
       if (errorRef.current) errorRef.current.focus()
+      setUnexpectedError('Debes seleccionar un tipo de tratamiento antes de registrar la salida.')
       return
     }
+    setUnexpectedError(null)
     execute(data)
   }
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+        {unexpectedError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">
+            {unexpectedError}
+          </div>
+        )}
+        {Object.values(methods.formState.errors).length > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded p-3 text-sm">
+            {Object.values(methods.formState.errors).map((err: any, i) => err?.message && <div key={i}>{err.message}</div>)}
+          </div>
+        )}
         {steps[currentStep] === 'PATIENT_NAME' && <PatientStep onNext={handleNext} />}
         {steps[currentStep] === 'TREATMENT_TYPE' && <TreatmentTypeStep onNext={handleNext} onBack={handleBack} />}
         {steps[currentStep] === 'DETAILS' && (
           <div>
             <DetailsStep />
+            {methods.formState.errors.items && (
+              <div className="text-red-600 text-xs mt-2">{methods.formState.errors.items.message}</div>
+            )}
             <div className="flex justify-between mt-4">
                 <Button onClick={handleBack} variant="outline" type="button">Atrás</Button>
                 <Button onClick={handleNext} type="button">Siguiente</Button>

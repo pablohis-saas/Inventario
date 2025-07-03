@@ -185,7 +185,7 @@ export class InventoryEntryService {
     return { success: true, results };
   }
 
-  async getMovements(type?: string, limit: number = 50) {
+  async getMovements(type?: string, limit: number = 50, offset: number = 0) {
     const where: any = {};
     if (type) {
       where.type = type;
@@ -213,6 +213,7 @@ export class InventoryEntryService {
         createdAt: 'desc',
       },
       take: limit,
+      skip: offset,
     });
   }
 
@@ -263,5 +264,44 @@ export class InventoryEntryService {
       },
       take: 10,
     });
+  }
+
+  async getEntriesByCategory(sedeId: string, from?: Date, to?: Date) {
+    const fromDate = from || new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    const toDate = to || new Date()
+    // Obtener todos los movimientos de entrada (ENTRY) en el rango de fechas
+    const entries = await this.prisma.movement.findMany({
+      where: {
+        sedeId,
+        type: MovementType.ENTRY,
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+      },
+      include: {
+        product: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    // Agrupar por categoría
+    const categoryMap = new Map<string, { totalQuantity: number; totalValue: number; entries: { name: string; quantity: number; totalValue: number; createdAt: Date }[] }>()
+    entries.forEach(entry => {
+      const category = entry.product.category || 'Sin categoría'
+      const existing = categoryMap.get(category) || { totalQuantity: 0, totalValue: 0, entries: [] }
+      const quantity = Number(entry.quantity)
+      const value = entry.totalCost instanceof Decimal ? entry.totalCost.toNumber() : Number(entry.totalCost)
+      existing.entries.push({ name: entry.product.name, quantity, totalValue: value, createdAt: entry.createdAt })
+      existing.totalQuantity += quantity
+      existing.totalValue += value
+      categoryMap.set(category, existing)
+    })
+    // Formatear resultado
+    return Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      totalQuantity: data.totalQuantity,
+      totalValue: data.totalValue,
+      entries: data.entries,
+    }))
   }
 } 

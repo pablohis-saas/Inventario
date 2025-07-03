@@ -69,4 +69,4 @@ export function TreatmentTypeStep({ onNext, onBack }: TreatmentTypeStepProps) {
       </CardContent>
     </Card>
   )
-}
+} 

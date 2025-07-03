@@ -29,8 +29,12 @@ export class InventoryEntryController {
   async getMovements(
     @Query('type') type?: string,
     @Query('limit') limit?: number,
+    @Query('offset') offset?: number,
   ) {
-    return this.inventoryEntryService.getMovements(type, limit || 50);
+    // Validar límites seguros
+    const safeLimit = Math.max(1, Math.min(Number(limit) || 50, 100));
+    const safeOffset = Math.max(0, Number(offset) || 0);
+    return this.inventoryEntryService.getMovements(type, safeLimit, safeOffset);
   }
 
   @Get('inventory')
@@ -41,5 +45,18 @@ export class InventoryEntryController {
   @Get('movements/recent')
   async getRecentMovements() {
     return this.inventoryEntryService.getRecentMovements();
+  }
+
+  @Get('by-category')
+  async getEntriesByCategory(
+    @Query('sedeId') sedeId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string
+  ) {
+    return this.inventoryEntryService.getEntriesByCategory(
+      sedeId,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined
+    )
   }
 }

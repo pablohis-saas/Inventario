@@ -68,10 +68,10 @@ export default function InventoryEntryForm() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedProduct, setSelectedProduct] = useState('')
   const [selectedProductId, setSelectedProductId] = useState('')
-  const [quantity, setQuantity] = useState(1)
-  const [price, setPrice] = useState(0)
+  const [quantity, setQuantity] = useState<string>('1')
+  const [price, setPrice] = useState<string>('0')
   const [expiry, setExpiry] = useState('')
-  const [mlPerVial, setMlPerVial] = useState(1)
+  const [mlPerVial, setMlPerVial] = useState<string>('1')
   const [entryProducts, setEntryProducts] = useState<EntryProduct[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -95,9 +95,13 @@ export default function InventoryEntryForm() {
       if (res.ok) {
         const data = await res.json()
         setProducts(data)
+      } else {
+        console.error('Error fetching products: status', res.status)
+        setSaveMessage('Error al cargar productos. Intenta recargar la página.')
       }
     } catch (error) {
       console.error('Error fetching products:', error)
+      setSaveMessage('Error al cargar productos. Intenta recargar la página.')
     }
   }
 
@@ -108,9 +112,13 @@ export default function InventoryEntryForm() {
         const data = await res.json()
         console.log(`Productos recibidos para categoría "${categoryName}":`, data)
         setProducts(data)
+      } else {
+        console.error(`Error fetching products by category (${categoryName}): status`, res.status)
+        setSaveMessage(`Error al cargar productos de la categoría "${categoryName}". Intenta recargar la página.`)
       }
     } catch (error) {
       console.error('Error fetching products by category:', error)
+      setSaveMessage(`Error al cargar productos de la categoría "${categoryName}". Intenta recargar la página.`)
       // Fallback a productos hardcodeados si hay error
       const currentCategory = PRODUCT_CATEGORIES.find(c => c.name === categoryName)
       if (currentCategory) {
@@ -148,39 +156,35 @@ export default function InventoryEntryForm() {
     setProductSelectionMode('existing')
     
     // Limpiar el formulario de nuevo producto
-    setPrice(0)
+    setPrice('0')
   }
 
   function handleAddProduct() {
     if (!selectedCategory || !selectedProduct) return
-    if (quantity <= 0 || price <= 0) return
-    
-    // Usar selectedProductId si está disponible, sino buscar por nombre
+    if (!quantity || Number(quantity) <= 0 || !price || Number(price) <= 0) return
     const productId = selectedProductId || getProductIdByName(selectedProduct)
-    
     if (!productId) {
       alert('Error: No se pudo obtener el ID del producto. Por favor, selecciona el producto nuevamente.')
       return
     }
-    
     setEntryProducts(prev => [
       ...prev,
       {
         category: selectedCategory,
         name: selectedProduct,
         productId,
-        quantity: isAlxoid ? quantity * mlPerVial : quantity,
-        price,
+        quantity: isAlxoid ? Number(quantity) * Number(mlPerVial) : Number(quantity),
+        price: Number(price),
         expiry: expiry || undefined,
-        mlPerVial: isAlxoid ? mlPerVial : undefined,
+        mlPerVial: isAlxoid ? Number(mlPerVial) : undefined,
       },
     ])
     setSelectedProduct('')
     setSelectedProductId('')
-    setQuantity(1)
-    setPrice(0)
+    setQuantity('1')
+    setPrice('0')
     setExpiry('')
-    setMlPerVial(1)
+    setMlPerVial('1')
     setProductSelectionMode(null)
   }
 
@@ -210,11 +214,13 @@ export default function InventoryEntryForm() {
       })
       if (!res.ok) {
         const text = await res.text();
+        console.error('Error al registrar entrada:', text)
         throw new Error(text || 'Error al registrar entrada')
       }
       setSaveMessage('¡Entrada registrada exitosamente!')
       setEntryProducts([])
     } catch (err) {
+      console.error('Error en handleSave:', err)
       setSaveMessage('Error al registrar entrada: ' + (err instanceof Error ? err.message : String(err)))
     } finally {
       setIsSaving(false)
@@ -349,8 +355,8 @@ export default function InventoryEntryForm() {
               <input 
                 type="number" 
                 min={1} 
-                value={quantity} 
-                onChange={e => setQuantity(Number(e.target.value))}
+                value={quantity}
+                onChange={e => setQuantity(e.target.value.replace(/[^0-9]/g, ''))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -361,8 +367,8 @@ export default function InventoryEntryForm() {
                 <input 
                   type="number" 
                   min={1} 
-                  value={mlPerVial} 
-                  onChange={e => setMlPerVial(Number(e.target.value))}
+                  value={mlPerVial}
+                  onChange={e => setMlPerVial(e.target.value.replace(/[^0-9]/g, ''))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -376,8 +382,8 @@ export default function InventoryEntryForm() {
                 type="number" 
                 min={0} 
                 step="0.01"
-                value={price} 
-                onChange={e => setPrice(Number(e.target.value))}
+                value={price}
+                onChange={e => setPrice(e.target.value.replace(/[^0-9.]/g, ''))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -446,7 +452,7 @@ export default function InventoryEntryForm() {
 
       {/* Mensaje de estado */}
       {saveMessage && (
-        <div className={`p-3 rounded-md ${
+        <div className={`p-3 rounded-md mt-4 ${
           saveMessage.includes('Error') 
             ? 'bg-red-50 text-red-700 border border-red-200' 
             : 'bg-green-50 text-green-700 border border-green-200'

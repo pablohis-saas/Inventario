@@ -50,6 +50,7 @@ export interface DashboardResponseDto {
     totalExits: number;
     totalUsage: number;
     totalUsedInventoryCost: number;
+    totalEnteredInventoryCost: number;
     lowStockAlerts: ProductInventoryDto[];
     expirationAlerts: ExpirationAlertDto[];
     mostUsedProducts: MostUsedProductDto[];

@@ -106,6 +106,9 @@ export class DashboardResponseDto {
   @ApiProperty()
   totalUsedInventoryCost: number = 0;
 
+  @ApiProperty()
+  totalEnteredInventoryCost: number = 0;
+
   @ApiProperty({ type: [ProductInventoryDto] })
   lowStockAlerts: ProductInventoryDto[] = [];
 

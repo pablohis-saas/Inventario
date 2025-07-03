@@ -8,7 +8,9 @@ import type { DashboardPageProps } from '@/types/dashboard'
 import { DashboardMetrics } from '@/components/dashboard/DashboardMetrics'
 
 async function DashboardContent({ searchParams }: DashboardPageProps) {
-  const { sedeId, from, to } = searchParams
+  const sedeId = searchParams.sedeId
+  const from = searchParams.from
+  const to = searchParams.to
   
   try {
     const data = await getDashboardMetrics({
@@ -23,7 +25,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard de Inventario</h1>
           <p className="text-gray-600 mb-6">Métricas y análisis del inventario médico</p>
-          
+
           {/* Filtro de fechas */}
           <DateRangeFilter 
             initialFrom={from} 
@@ -36,6 +38,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
         <DashboardMetrics
           totalInventoryValue={data.totalInventoryValue}
           totalUsedInventoryCost={data.totalUsedInventoryCost}
+          totalEnteredInventoryCost={data.totalEnteredInventoryCost}
           lowStockAlerts={data.lowStockAlerts}
           expirationAlerts={data.expirationAlerts}
         />
@@ -121,7 +124,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
                   ))
                 )}
               </div>
-            </div>
+          </div>
           </section>
           
           {/* Inventario inmovilizado y alertas */}
@@ -143,7 +146,7 @@ async function DashboardContent({ searchParams }: DashboardPageProps) {
                   ))
                 )}
               </div>
-            </div>
+          </div>
           </aside>
         </div>
       </div>

@@ -11,12 +11,14 @@ interface DateRangeFilterProps {
   initialFrom?: string
   initialTo?: string
   sedeId?: string
+  basePath?: string
 }
 
 export function DateRangeFilter({ 
   initialFrom, 
   initialTo,
-  sedeId
+  sedeId,
+  basePath = '/dashboard'
 }: DateRangeFilterProps) {
   const router = useRouter()
   const [fromDate, setFromDate] = useState(initialFrom || '')
@@ -28,7 +30,7 @@ export function DateRangeFilter({
     if (fromDate) urlParams.append('from', fromDate)
     if (toDate) urlParams.append('to', toDate)
     
-    router.push(`/dashboard?${urlParams.toString()}`)
+    router.push(`${basePath}?${urlParams.toString()}`)
   }
 
   const handleReset = () => {
@@ -36,7 +38,7 @@ export function DateRangeFilter({
     setToDate('')
     const urlParams = new URLSearchParams()
     if (sedeId) urlParams.append('sedeId', sedeId)
-    router.push(`/dashboard?${urlParams.toString()}`)
+    router.push(`${basePath}?${urlParams.toString()}`)
   }
 
   return (
@@ -46,7 +48,7 @@ export function DateRangeFilter({
           <Calendar className="h-5 w-5 text-blue-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Filtrar por Fecha</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Filtrar por Fecha</h3>
           <p className="text-sm text-gray-600">Selecciona un rango de fechas para ver las métricas</p>
         </div>
       </div>

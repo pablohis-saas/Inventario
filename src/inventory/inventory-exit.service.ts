@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryExitDto, ProductUsageDto } from './dto/inventory-exit.dto';
-import { UserRole } from '@prisma/client';
+import { UserRole, MovementType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -68,5 +68,50 @@ export class InventoryExitService {
     }
 
     return { success: true };
+  }
+
+  async getExitsByCategory(sedeId: string, from?: Date, to?: Date) {
+    const fromDate = from || new Date(0)
+    const toDate = to || new Date()
+    // Obtener todos los movimientos de salida (EXIT) en el rango de fechas
+    const exits = await this.prisma.movement.findMany({
+      where: {
+        sedeId,
+        type: MovementType.EXIT,
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+      },
+      include: {
+        product: true,
+      },
+    })
+    // Agrupar por categoría
+    const categoryMap = new Map<string, { totalQuantity: number; totalValue: number; products: { name: string; quantity: number; totalValue: number }[] }>()
+    exits.forEach(exit => {
+      const category = exit.product.category || 'Sin categoría'
+      const existing = categoryMap.get(category) || { totalQuantity: 0, totalValue: 0, products: [] }
+      const quantity = Number(exit.quantity)
+      const value = exit.totalCost instanceof Decimal ? exit.totalCost.toNumber() : Number(exit.totalCost)
+      // Buscar si el producto ya está en la lista
+      const prodIndex = existing.products.findIndex(p => p.name === exit.product.name)
+      if (prodIndex >= 0) {
+        existing.products[prodIndex].quantity += quantity
+        existing.products[prodIndex].totalValue += value
+      } else {
+        existing.products.push({ name: exit.product.name, quantity, totalValue: value })
+      }
+      existing.totalQuantity += quantity
+      existing.totalValue += value
+      categoryMap.set(category, existing)
+    })
+    // Formatear resultado
+    return Array.from(categoryMap.entries()).map(([category, data]) => ({
+      category,
+      totalQuantity: data.totalQuantity,
+      totalValue: data.totalValue,
+      products: data.products,
+    }))
   }
 } 

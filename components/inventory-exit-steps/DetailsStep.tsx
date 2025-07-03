@@ -15,53 +15,39 @@ import { Button } from '@/components/ui/button'
 function ItemsList({ fields, remove }: { fields: any[]; remove: (index: number) => void }) {
   if (fields.length === 0) {
     return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-lg">Items Agregados</CardTitle>
-          <div className="text-sm text-red-600">
-            ⚠️ No hay items agregados aún
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-4">
-            No hay items agregados aún. Selecciona productos de la lista de arriba.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">Resumen de productos</h3>
+        <p className="text-gray-500 italic">No hay productos agregados.</p>
+      </div>
     )
   }
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="text-lg">Items Agregados ({fields.length})</CardTitle>
-        <div className="text-sm text-green-600">
-          ✅ {fields.length} item(s) agregado(s)
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/30">
-              <div className="flex-1">
-                <p className="font-medium">{(field as InventoryUsageDetailInput).nombreProducto}</p>
-                <p className="text-sm text-muted-foreground">
-                  Cantidad: {(field as InventoryUsageDetailInput).cantidad}
-                </p>
+    <div className="mt-4">
+      <h3 className="text-lg font-semibold text-gray-800 mb-3">Resumen de productos</h3>
+      <ul className="space-y-2">
+        {fields.map((field, index) => (
+          <li key={field.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+            <div>
+              <span className="font-medium text-gray-800">[{field.categoria || 'Sin categoría'}] {field.nombreProducto}</span>
+              <div className="text-sm text-gray-600">
+                Cantidad: {field.cantidad}
+                {field.dosis && ` — Dosis: ${field.dosis}`}
+                {field.mlPorFrasco && ` — ml/frasco: ${field.mlPorFrasco}`}
+                {field.fechaCaducidad && ` — Caducidad: ${field.fechaCaducidad}`}
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => remove(index)}
-              >
-                Eliminar
-              </Button>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            <button
+              type="button"
+              onClick={() => remove(index)}
+              className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Eliminar
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

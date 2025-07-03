@@ -37,6 +37,7 @@ export function SimpleTreatmentForm({
       subtipo: subtipo,
       nombreProducto: itemName,
       cantidad: quantity,
+      categoria: subtipo,
     });
     setLastAddedItem(`${itemName} (${quantity})`)
     setTimeout(() => setLastAddedItem(''), 3000)
@@ -98,7 +99,7 @@ export function SimpleTreatmentForm({
                 type="number"
                 min={1}
                 max={maxQuantity}
-                value={customQuantity[item] || ''}
+                value={customQuantity[item] ?? ''}
                 onChange={e => {
                   const val = e.target.value.replace(/[^0-9]/g, '')
                   setCustomQuantity(prev => ({ ...prev, [item]: val }))

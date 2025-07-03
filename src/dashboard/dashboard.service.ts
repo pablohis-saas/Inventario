@@ -103,6 +103,23 @@ export class DashboardService {
 
     const totalUsedInventoryCost = usedInventory._sum.totalCost ? Number(usedInventory._sum.totalCost) : 0;
 
+    // Get entered inventory cost (Inventario Ingresado)
+    const enteredInventory = await this.prisma.movement.aggregate({
+      where: {
+        sedeId,
+        type: MovementType.ENTRY,
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+      },
+      _sum: {
+        totalCost: true,
+      },
+    });
+
+    const totalEnteredInventoryCost = enteredInventory._sum.totalCost ? Number(enteredInventory._sum.totalCost) : 0;
+
     // Get low stock alerts (threshold: 10 units)
     const lowStockAlerts = inventory.filter(item => item.quantity < 10);
 
@@ -139,6 +156,7 @@ export class DashboardService {
       totalExits,
       totalUsage,
       totalUsedInventoryCost,
+      totalEnteredInventoryCost,
       lowStockAlerts,
       expirationAlerts,
       mostUsedProducts,

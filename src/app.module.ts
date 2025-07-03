@@ -4,6 +4,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
     InventoryModule,
     DashboardModule,
     AuthModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],

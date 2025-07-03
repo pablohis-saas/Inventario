@@ -1,15 +1,12 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Query, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InventoryExitService } from './inventory-exit.service';
 import { InventoryExitDto } from './dto/inventory-exit.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '@prisma/client';
 
 @ApiTags('Inventory')
 @Controller('inventory')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class InventoryExitController {
   constructor(private readonly inventoryExitService: InventoryExitService) {}
 
@@ -22,5 +19,20 @@ export class InventoryExitController {
   })
   async processInventoryExit(@Body() dto: InventoryExitDto) {
     return this.inventoryExitService.processInventoryExit(dto);
+  }
+
+  @Get('exit/by-category')
+  @ApiOperation({ summary: 'Obtener salidas agrupadas por categoría' })
+  @ApiResponse({ status: 200, description: 'Salidas agrupadas por categoría' })
+  async getExitsByCategory(
+    @Query('sedeId') sedeId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string
+  ) {
+    return this.inventoryExitService.getExitsByCategory(
+      sedeId,
+      from ? new Date(from) : undefined,
+      to ? new Date(to) : undefined
+    )
   }
 } 
